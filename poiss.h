@@ -10,4 +10,6 @@ double P(int k, double l){
 	return (pow(l,k))*(exp(-l))/(fact(k));
 }
 
-
+double ranflt(double max){
+	return (max * ((double) rand()))/((double) (RAND_MAX));
+}

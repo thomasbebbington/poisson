@@ -17,10 +17,30 @@ int numOfPoint(double l, double p){
 	return i;
 }
 
+double* placePoints(int k){
+	double* arr = (double*) malloc((k * sizeof(double)) + 1);
+	arr[0] = (double) k;
+	for(int i = 1; i < (k + 1); i++){
+		arr[i] = ranflt(1);
+	}
+
+	return arr;
+}
+
 int main(){
 	srand(time(NULL));
 
-	printf("%d\n", numOfPoint(3,((double) rand()/(double) RAND_MAX)));
+	int k = numOfPoint(3,ranflt(1));
+
+	double* arr = placePoints(k);
+	
+	printf("%d\n", (int) arr[0]);
+
+	for(int j = 1; j < (k + 1); j++){
+		printf("%f\n", arr[j]);
+	}
+
+	free(arr);
 	
 }
 
