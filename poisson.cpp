@@ -9,15 +9,16 @@
 
 int numOfPoint(double l, double p){
 	int i = -1;
-	double cumprob = 0;
-	double prob = 0;
+	long double cumprob = 0;
+	long double prob = 0;
 	printf("Sig: %f\n", p);
 
 	while(cumprob < p){
-		printf("cum: %f %d\n", cumprob, i);
 		i++;
 		prob = P(i, l);
 		cumprob += prob;
+		printf("%d cum: %Lf, prob: %Lf\n", i, cumprob, prob);
+
 	}
 	return i;
 }
@@ -78,7 +79,7 @@ qsort((void*) &arr[1], (int) arr[0], sizeof(double), compDouble);
 int main(){
 	srand(time(NULL));
 	double window = 5.0f;
-	double avg = 50.0f;
+	double avg = 100.0f;
 	/*
 	double* currentPoints = simEvents(window);
 	double* nextPoints;
@@ -88,17 +89,21 @@ int main(){
 
 	pthread_create(&printThread, NULL, printEvents, NULL);
 	*/
-			
+	
+		
 	double* arr = simEvents(avg, window);
 
-	sortEvents(arr);
-
-	for(int i = 0; i < ((int) arr[0]) + 1; i++){
-		printf("%f\n", arr[i]);
-	}
-	
-	
+	sortEvents(arr);	
 
 	printEvents(arr, window);
+	
+		
+	/*
+	for(int i = 0; i < 50; i++){
+		printf("%Lf\n", P(i,30));
+
+	}
+	*/
+
 }
 
