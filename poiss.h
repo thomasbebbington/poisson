@@ -6,12 +6,12 @@ long long int fact(int k){
 	}
 }
 
-long double P(int k, double l){
-	long double el = exp(-l);
-	long double pel = (pow(l,k))*el;
+double P(int k, double l){
+	double el = exp(-l);
+	double pel = (pow(l,k))*el;
 	
 	int curr = k;
-	long double r = pel;
+	double r = pel;
 
 
 	if(k == 0){
@@ -24,6 +24,35 @@ long double P(int k, double l){
 	}
 
 	return r;
+}
+
+int probcount(double l){
+	int j = ceil(l);
+	double prob = 0;
+	do{
+		j++;
+		prob = P(j, l);
+
+	}while (prob > 0.001);
+	j--;
+	return j;
+}
+
+void cumprobs(double l, int probCount, double* cumProbs){
+	int j = probCount - 1;
+	double prob = 0;
+	std::cout << j << "\n";
+	
+	cumProbs[j] = P(j,l);	
+	do{
+		prob = P(j,l);
+		cumProbs[j-1] = cumProbs[j] + prob;
+		j--;
+	}while (prob > 0.001 && j > 0);
+	while(j > 0){
+		cumProbs[j-1] = 1;
+		j--;
+	}
 }
 
 double ranflt(double max){

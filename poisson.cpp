@@ -2,10 +2,13 @@
 #include <cstdio>
 #include <math.h>
 #include <time.h>
-#include "poiss.h"
+
 #include <pthread.h>
 #include <unistd.h>
 #include <algorithm>
+#include <iostream>
+#include "poiss.h"
+
 
 int numOfPoint(double l, double p){
 	int i = -1;
@@ -79,7 +82,7 @@ qsort((void*) &arr[1], (int) arr[0], sizeof(double), compDouble);
 int main(){
 	srand(time(NULL));
 	double window = 5.0f;
-	double avg = 100.0f;
+	double avg = 30.0f;
 	/*
 	double* currentPoints = simEvents(window);
 	double* nextPoints;
@@ -89,21 +92,17 @@ int main(){
 
 	pthread_create(&printThread, NULL, printEvents, NULL);
 	*/
-	
-		
-	double* arr = simEvents(avg, window);
+	int probCount = probcount(avg);
 
-	sortEvents(arr);	
+	double* cumProbs = (double*) malloc(sizeof(double) * probCount);
+	cumprobs(avg, probCount, cumProbs);
 
-	printEvents(arr, window);
 	
-		
-	/*
-	for(int i = 0; i < 50; i++){
-		printf("%Lf\n", P(i,30));
+	for(int i = 0; i < probCount; i++){
+		std::cout << i << " " << cumProbs[i] << std::endl;
 
 	}
-	*/
-
+	
+	free(cumProbs);
 }
 
