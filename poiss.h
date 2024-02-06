@@ -41,8 +41,7 @@ int probcount(double l){
 void cumprobs(double l, int probCount, double* cumProbs){
 	int j = probCount - 1;
 	double prob = 0;
-	std::cout << j << "\n";
-	
+
 	cumProbs[j] = P(j,l);	
 	do{
 		prob = P(j,l);
@@ -58,3 +57,15 @@ void cumprobs(double l, int probCount, double* cumProbs){
 double ranflt(double max){
 	return (max * ((double) rand()))/((double) (RAND_MAX));
 }
+
+int compDouble(const void* fst, const void* snd){
+	double arg1 = *(double*) fst;
+	double arg2 = *(double*) snd;
+
+	double diff = arg1 - arg2;
+
+	if (diff < 0) return -1;
+	if (diff > 0) return 1;
+	return 0;
+}
+
