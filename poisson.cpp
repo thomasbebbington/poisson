@@ -9,100 +9,183 @@
 #include <iostream>
 #include "poiss.h"
 
+struct sim_args{
+	double avg;
+	double window;
+	double* cumProbs;
+	int probCount;
+	int* pointCount;
+	double** points;
+};
 
-int numOfPoint(double l, double sig, double* cumProbs){
+
+int numOfPoint(double l, double sig, double* cumProbs, int probCount){
 	double prob = 0;
-	printf("Sig: %f\n", sig);
-	int i = 0;	
-	
+	int i = 0;		
 	while(sig < cumProbs[i]){
 		i++;
+		if(!(i < probCount)){
+			return i;
+		}
 	}
 	return i;
 }
 
-double* placePoints(int k, double window){
-	double* arr = (double*) malloc((k * sizeof(double)));
+void placePoints(int k, double window, double* arr){
+	if(k == 0){
+		return;
+	}
 	for(int i = 0; i < k; i++){
 		arr[i] = window * ranflt(1);
 	}
-
-	return arr;
 }
 
-double* simEvents(double avg, double window, double* cumProbs, int* pointCount){
-	*pointCount = numOfPoint(avg, ranflt(1), cumProbs);
+void* simEvents(void* args){
 
-	double* arr = placePoints(*pointCount, window);
 
-	return arr;
+	sim_args arguments = *((sim_args*) args);
+	
+	*arguments.pointCount = numOfPoint(arguments.avg, ranflt(1), arguments.cumProbs, arguments.probCount);
+	*arguments.points = (double*) malloc(sizeof(double) * *arguments.pointCount);
+
+	placePoints(*arguments.pointCount, arguments.window, *arguments.points);
+	free(args);
+
+	return 0;
 }
 
 void sortEvents(double* arr, int length){
+	if(length < 2){
+		return;
+	}
 	qsort((void*) arr, length, sizeof(double), compDouble);
 }
 
-void printEvents(double *arr, double window, int pointCount){
+void printEvents(double* arr, double window, int pointCount, double* time){
 	sortEvents(arr, pointCount);
 
-	double t = 0.0f;
+	double t = 0;
 	int current = 0;
 	double interval = 0.05f;
 	
+	if(pointCount == 0){
+		goto done;
+	}
+
 	while(t <= window){
 		while(arr[current] < t){
-			std::cout << "Event " << arr[current] << std::endl;
+			std::cout << "Event: " << (*time + arr[current]) << std::endl;
 			current++;
 			if(current == pointCount){
-				return;
+				goto done;
 			}
 		}
+		
 		t += interval;
 		usleep(interval * 1000000);
 	}
+done:
+	while(t <= window){
+		t += interval;
+		usleep(interval * 1000000);
+	}
+	*time = *time + window;
 }
 
 
+void run(int* currPointCount, double* currPoints, double* cumProbs, int probCount, double avg, double window, int windows){
+	double* t = (double*) malloc(sizeof(double));
+	*t = 0;
 
+	int iterations = 0;
+	std::cout << "Starting" << std::endl;
+	
+	int* nextPointCount;
+	double* nextPoints;
+	if(windows>1){
+		//Simulate next points
+		struct sim_args* args = (sim_args*) malloc(sizeof(sim_args));
+		args->avg = avg;
+		args->window = window;
+		args->cumProbs = cumProbs;
+		args->probCount = probCount;
+
+		nextPointCount = (int*) malloc(sizeof(int));
+		args->pointCount = nextPointCount;
+		args->points = &nextPoints;
+		simEvents(args);
+	}
+
+	while(iterations < windows){
+		printEvents(currPoints, window, *currPointCount, t);
+		//std::cout << "Finished printing" << std::endl;
+
+
+		//free(currPointCount);
+		free(currPoints);
+		currPointCount = nextPointCount;
+		currPoints = nextPoints;
+
+		if(iterations < windows - 2){
+			
+			
+			//std::cout << nextPointCount << std::endl;
+			//std::cout << nextPoints << std::endl;
+
+
+			pthread_t simThread;
+		
+			struct sim_args* args = (sim_args*) malloc(sizeof(sim_args));
+			args->avg = avg;
+			args->window = window;
+			args->cumProbs = cumProbs;
+			args->probCount = probCount;
+
+			args->pointCount = nextPointCount;
+			args->points = &nextPoints;
+
+			pthread_create(&simThread, NULL, &simEvents, (void*) args);
+		}
+
+		iterations++;		
+	}
+	if(windows > 1){
+		free(nextPointCount);
+
+	}
+	free(t);	
+	std::cout << "Done" << std::endl;
+}
 
 int main(){
 	srand(time(NULL));
-	double window = 5.0f;
+	double window = 1.0f;
 	double avg = 12.0f;
-	/*
-	double* currentPoints = simEvents(window);
-	double* nextPoints;
+	int windows = 2;
 	
-	pthread_t printThread;
-	pthread_t simThread;
-
-	pthread_create(&printThread, NULL, printEvents, NULL);
-	*/
-
 	int probCount = probcount(avg);
 	double* cumProbs = (double*) malloc(sizeof(double) * probCount);
 	cumprobs(avg, probCount, cumProbs);
-	
-	for(int n = 0; n < probCount; n++){
-		std::cout << n << " " << cumProbs[n] << std::endl;
 
-	}
-	
-	int* pointCount = (int*) malloc(sizeof(int));
-	double* points = simEvents(avg, window, cumProbs, pointCount);
+	int* currPointCount = (int*) malloc(sizeof(int));
+	double* currPoints;
+	struct sim_args* args = (sim_args*) malloc(sizeof(sim_args));
+	args->avg = avg;
+	args->window = window;
+	args->cumProbs = cumProbs;
+	args->probCount = probCount;
 
-	std::cout << *pointCount << std::endl;
 
-	for(int n = 0; n < *pointCount; n++){
-		std::cout << points[n] << std::endl;
-	}	
+	args->pointCount = currPointCount;
+	args->points = &currPoints;
+	simEvents(args);
 
-	std::cout << std::endl;
 
-	printEvents(points, window, *pointCount);
+	run(currPointCount, currPoints, cumProbs, probCount, avg, window, windows);
 
 	free(cumProbs);
-	free(pointCount);
-	free(points);
+	free(currPointCount);
+		
+	return 0;
 }
 
