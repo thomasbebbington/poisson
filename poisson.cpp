@@ -9,6 +9,7 @@
 #include <iostream>
 #include "poiss.h"
 
+// Struct containing arguments for simEvents function
 struct sim_args{
 	double avg;
 	double window;
@@ -18,7 +19,7 @@ struct sim_args{
 	double** points;
 };
 
-
+// Calcualtes a point count for a time window
 int numOfPoint(double l, double sig, double* cumProbs, int probCount){
 	double prob = 0;
 	int i = 0;		
@@ -31,6 +32,7 @@ int numOfPoint(double l, double sig, double* cumProbs, int probCount){
 	return i;
 }
 
+// Places k points uniformly at random inside a time wnidow
 void placePoints(int k, double window, double* arr){
 	if(k == 0){
 		return;
@@ -40,9 +42,8 @@ void placePoints(int k, double window, double* arr){
 	}
 }
 
+// Simulates points inside a time window
 void* simEvents(void* args){
-
-
 	sim_args arguments = *((sim_args*) args);
 	
 	*arguments.pointCount = numOfPoint(arguments.avg, ranflt(1), arguments.cumProbs, arguments.probCount);
@@ -54,6 +55,7 @@ void* simEvents(void* args){
 	return 0;
 }
 
+// Sorts points by time to be printed out in order
 void sortEvents(double* arr, int length){
 	if(length < 2){
 		return;
@@ -61,6 +63,7 @@ void sortEvents(double* arr, int length){
 	qsort((void*) arr, length, sizeof(double), compDouble);
 }
 
+// Prints out points as an event in time
 void printEvents(double* arr, double window, int pointCount, double* time){
 	sortEvents(arr, pointCount);
 
@@ -92,7 +95,6 @@ done:
 	*time = *time + window;
 }
 
-
 void run(int* currPointCount, double* currPoints, double* cumProbs, int probCount, double avg, double window, int windows){
 	double* t = (double*) malloc(sizeof(double));
 	*t = 0;
@@ -118,23 +120,15 @@ void run(int* currPointCount, double* currPoints, double* cumProbs, int probCoun
 
 	while(iterations < windows){
 		printEvents(currPoints, window, *currPointCount, t);
-		//std::cout << "Finished printing" << std::endl;
 
-
-		//free(currPointCount);
 		free(currPoints);
 		currPointCount = nextPointCount;
 		currPoints = nextPoints;
 
 		if(iterations < windows - 2){
-			
-			
-			//std::cout << nextPointCount << std::endl;
-			//std::cout << nextPoints << std::endl;
-
-
+			// Simulates more points if needed
 			pthread_t simThread;
-		
+			
 			struct sim_args* args = (sim_args*) malloc(sizeof(sim_args));
 			args->avg = avg;
 			args->window = window;
@@ -158,7 +152,10 @@ void run(int* currPointCount, double* currPoints, double* cumProbs, int probCoun
 }
 
 int main(){
+	// Seed random generator
 	srand(time(NULL));
+
+	// Simulation parameters
 	double window = 1.0f;
 	double avg = 12.0f;
 	int windows = 2;
